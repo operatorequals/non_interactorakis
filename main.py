@@ -1,5 +1,19 @@
+#!/usr/bin/env python
+
+
 import sys
 import os
+import pty
+
+def execTTY() :
+	import tty
+#	print "Getting TTY..."
+	fileno = sys.stdin.fileno()
+#	tty.setraw(fileno)
+#	tty.setcbreak(fileno)
+	pty.spawn(["./%s" % sys.argv[0], sys.argv[1]])	# respawns the process in TTY
+	sys.exit(0)
+
 
 def boolify(s):
     if s == 'True':
@@ -19,21 +33,27 @@ def autoconvert(s):
 
 try :
 	filename = sys.argv[1]
-	file = open(filename, 'r+b')
-except :
+	file = open(filename, 'rw+')
+	if not sys.stdin.isatty() : execTTY()
+
+except Exception as e:
+#	print e
 	print "Usage:"
 	print "	%s file_to_edit" % sys.argv[0]
 	sys.exit(1)
 
 
-print "File to edit '%s'." % filename
+print "==== File to edit '%s' ====" % filename
+print "Use 'quit' (NOT 'exit') to exit the editor..."
 lines = file.readlines()
-
+#print len(lines)
 
 def displayFile(start = 0, stop = None) :
 	if stop == None :
 		stop = len(lines)
-	for number in range(start,stop+1) :
+	if stop > len(lines) :
+		stop = len(lines)
+	for number in range(start,stop) :
 		print "{0:4} ~ {1}" .format (number, lines[number]),
 
 
@@ -45,7 +65,7 @@ def editLine(line_n) :
 	print "=" * len(line)
 
 	new_line = raw_input("Editing Line> ")
-	lines[line_n] = new_line + os.linesep
+	lines[line_n] = new_line
 
 
 def showHelp() :
@@ -54,25 +74,30 @@ def showHelp() :
 		print "{0}\t- {1}\n".format(comm, commands[comm][1])
 	print "=" * 20
 
+
 def saveFile() :
 	toSave = ''.join( lines )
-	print toSave
+	nlines = len(lines)
+#	file
 	file.write(toSave)
 	file.flush()
-	print "Saved!"
+	print "Saved %d lines!" % nlines
 
 
 def exitEditor() :
 	file.close()
+#	raise Exception("Exiting...")
+	sys.exit(0)
 
 
 commands = {
 "display" : (displayFile, "Displays the whole or a portion of the file.\nExample: display [starting_line], [ending_line]"), 
 "edit" : (editLine, "Edit a specific line.\nExample: edit <line_to_edit>"),
 "save" : (saveFile, "Save file changes.\nExample: save"),
-"exit" : (exitEditor, "Exits the Editor"),
+"quit" : (exitEditor, "Exits the Editor"),
 "help" : (showHelp, "Shows list of commands and examples")
 }
+
 
 while True :
 	comm = raw_input("Editor> ")
@@ -85,6 +110,10 @@ while True :
 	args = [ autoconvert(tok) for tok in tokens[1:] ]
 	if tokens[0].lower() in commands.keys() :
 		commands[comm][0](*args)
+
+	else :
+		print "Command '%s' not found." % comm
+		print "Type 'help' for a list of commands"
 
 
 #	if comm == 'help' :
