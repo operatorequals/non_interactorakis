@@ -49,9 +49,13 @@ print "Use 'quit' (NOT 'exit') to exit the editor..."
 lines = file.readlines()
 
 
-less_step = 10
+Less_step = 10
 counter = 0
-def lessFile(less_step = less_step) :
+def lessFile(less_step = Less_step) :
+
+#	if less_step != Less_step :
+	global Less_step
+	Less_step = less_step
 
 	global counter
 	if counter + less_step > len(lines) :
@@ -63,13 +67,15 @@ def lessFile(less_step = less_step) :
 		counter = 0
 
 
-def displayFile(start = 0, stop = None) :
+def displayFile(start = 0, stop = None, lines_ = None) :
+	if lines_ == None :
+		lines_ = lines
 	if stop == None :
-		stop = len(lines)
+		stop = len(lines_)
 	if stop > len(lines) :
-		stop = len(lines)
+		stop = len(lines_)
 	for number in range(start,stop) :
-		print "{0:4} ~ {1}" .format (number, lines[number]),
+		print "{0:4} ~ {1}" .format (number, lines_[number]),
 	print
 
 
@@ -135,6 +141,25 @@ def overwriteFile() :
 	lines = lines[:-1]	# remove the hash added at the end
 	print "Wrote %d lines to the file!" % (len(lines))
 
+def swapLines(l1, l2) :
+	lines[l1], lines[l2] = lines[l2], lines[l1]
+
+
+def searchLines(keyword) :
+	ans = []
+	for line in lines :
+		if keyword in line :
+			ans.append( line )
+	displayFile(lines_ = ans)
+
+import re
+def searchRegex(regex) :
+	ans = []
+	for line in lines :
+		match = re.search(regex, line)
+		if match :
+			ans.append( line )
+	displayFile(lines_ = ans)
 
 
 commands = {
@@ -145,7 +170,11 @@ commands = {
 "help" : (showHelp, "Shows list of commands and examples"),
 "less" : (lessFile, "A 'less' like way to view the file. Uses an optional 'step' argument"),
 "clear" : (clearFile, "Clears the whole file (doesn't automatically save)" ),
-"overwrite" : (overwriteFile, "Lets you write the whole file from scratch using line-by-line editing")
+"overwrite" : (overwriteFile, "Lets you write the whole file from scratch using line-by-line editing"),
+"swap" : (swapLines, "Swaps 2 lines by line number given as arguments"),
+"search" : (searchLines, "Searches all lines for a keyword given as argument"),
+"regex" : (searchRegex, "Searces all lines for regex given as argument")
+
 }
 
 
@@ -158,8 +187,11 @@ while True :
 	comm = tokens[0]
 
 	args = [ autoconvert(tok) for tok in tokens[1:] ]
-	if tokens[0].lower() in commands.keys() :
-		commands[comm][0](*args)
+	if comm.lower() in commands.keys() :
+		try :
+			commands[comm][0](*args)
+		except :
+			print "Command '%s' needs more parameters. Check 'help'." % comm
 
 	else :
 		print "Command '%s' not found." % comm
