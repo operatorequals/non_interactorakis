@@ -124,22 +124,39 @@ def exitEditor() :
 def overwriteFile() :
 	rand_str = os.urandom(8).encode('hex')
 	print "You are about to overwrite the whole file."
-	print "Type '%s' to return to Editor Prompt" % rand_str
 	option = raw_input("Are you sure? [y/N]")
 	if not (option.lower() == 'y' or option.lower() == 'yes') :
 		print "Aborted"
 		return
 
 	global lines
-	lines = []
-	i = 0
-	line = ''
-	while line.rstrip() != rand_str :
-		line = raw_input( "{:4}> ".format(i) )
-		lines.append( line + os.linesep )
-		i += 1
-	lines = lines[:-1]	# remove the hash added at the end
-	print "Wrote %d lines to the file!" % (len(lines))
+	lines = perLineWrite()
+	print "Wrote %d lines! Changes HAVEN'T been saved" % (len(lines))
+
+
+def perLineWrite() :
+
+	rand_str = os.urandom(8).encode('hex')
+	print "Type '%s' to return to Editor Prompt" % rand_str
+
+        buffer = []
+        i = 0
+        line = ''
+        while line.rstrip() != rand_str :
+                line = raw_input( "{:4}> ".format(i) )
+                buffer.append( line + os.linesep )
+                i += 1
+        buffer = buffer[:-1]      # remove the hash added at the end
+
+	return buffer
+
+
+def insertLine( line_n = len(lines) ) :
+	print "Type the line to insert at line number %d" % line_n
+	line = raw_input("!> ")
+	global lines
+	lines.insert( line_n, line + os.linesep )
+
 
 def swapLines(l1, l2) :
 	lines[l1], lines[l2] = lines[l2], lines[l1]
@@ -173,8 +190,8 @@ commands = {
 "overwrite" : (overwriteFile, "Lets you write the whole file from scratch using line-by-line editing"),
 "swap" : (swapLines, "Swaps 2 lines by line number given as arguments"),
 "search" : (searchLines, "Searches all lines for a keyword given as argument"),
-"regex" : (searchRegex, "Searces all lines for regex given as argument")
-
+"regex" : (searchRegex, "Searces all lines for regex given as argument"),
+"insert" : (insertLine, "Type the line to insert at the line number specified as argument (default appends the line to the file)")
 }
 
 
