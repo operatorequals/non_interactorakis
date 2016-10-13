@@ -33,7 +33,8 @@ def autoconvert(s):
 
 try :
 	filename = sys.argv[1]
-	file = open(filename, 'rw+')
+	file = open(filename, 'r+')
+
 	if not sys.stdin.isatty() : execTTY()
 
 except Exception as e:
@@ -46,7 +47,20 @@ except Exception as e:
 print "==== File to edit '%s' ====" % filename
 print "Use 'quit' (NOT 'exit') to exit the editor..."
 lines = file.readlines()
-#print len(lines)
+
+less_step = 10
+counter = 0
+def lessFile(less_step = less_step) :
+
+	global counter
+	if counter + less_step > len(lines) :
+		less_step = len(lines) - counter
+
+	displayFile(counter, counter+less_step)
+	counter += less_step
+	if counter >= len(lines) :
+		counter = 0
+
 
 def displayFile(start = 0, stop = None) :
 	if stop == None :
@@ -65,7 +79,7 @@ def editLine(line_n) :
 	print "=" * len(line)
 
 	new_line = raw_input("Editing Line> ")
-	lines[line_n] = new_line
+	lines[line_n] = new_line + os.linesep
 
 
 def showHelp() :
@@ -78,9 +92,13 @@ def showHelp() :
 def saveFile() :
 	toSave = ''.join( lines )
 	nlines = len(lines)
-#	file
-	file.write(toSave)
-	file.flush()
+	global file			# close the reading descriptor
+	file.close()
+	file = open(filename, 'w')	# purge content
+	file.write(toSave)		# write whole new content
+	file.close()
+
+	file = open(filename, 'r')	# reopen for reading
 	print "Saved %d lines!" % nlines
 
 
@@ -95,7 +113,8 @@ commands = {
 "edit" : (editLine, "Edit a specific line.\nExample: edit <line_to_edit>"),
 "save" : (saveFile, "Save file changes.\nExample: save"),
 "quit" : (exitEditor, "Exits the Editor"),
-"help" : (showHelp, "Shows list of commands and examples")
+"help" : (showHelp, "Shows list of commands and examples"),
+"less" : (lessFile, "A 'less' like way to view the file")
 }
 
 
