@@ -54,10 +54,14 @@ counter = 0
 def lessFile(less_step = Less_step) :
 
 #	if less_step != Less_step :
+	global counter
+	if less_step == 0 :
+		counter = 0
+		less_step = Less_step
+
 	global Less_step
 	Less_step = less_step
 
-	global counter
 	if counter + less_step > len(lines) :
 		less_step = len(lines) - counter
 
@@ -158,6 +162,11 @@ def insertLine( line_n = len(lines) ) :
 	lines.insert( line_n, line + os.linesep )
 
 
+def deleteLine( line_n ) :
+	global lines
+	lines.pop(line_n)
+
+
 def swapLines(l1, l2) :
 	lines[l1], lines[l2] = lines[l2], lines[l1]
 
@@ -191,7 +200,8 @@ commands = {
 "swap" : (swapLines, "Swaps 2 lines by line number given as arguments"),
 "search" : (searchLines, "Searches all lines for a keyword given as argument"),
 "regex" : (searchRegex, "Searces all lines for regex given as argument"),
-"insert" : (insertLine, "Type the line to insert at the line number specified as argument (default appends the line to the file)")
+"insert" : (insertLine, "Type the line to insert at the line number specified as argument (default appends the line to the file)"),
+"delete" : (deleteLine, "Deletes the line at the line number specified as argument" )
 }
 
 
