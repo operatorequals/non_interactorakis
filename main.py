@@ -99,7 +99,7 @@ def editLine(line_n) :
 def showHelp() :
 	print "=" * 20
 	for comm in commands.keys() :
-		print "{0}\t- {1}\n".format(comm, commands[comm][1])
+		print "[+] {0}\t- {1}\n".format(comm, commands[comm][1])
 	print "=" * 20
 
 
@@ -111,13 +111,13 @@ def saveFileAs( given_filename = None ) :
 	else :
 		filename = given_filename
 
-	Buffers[ cur_buffer ] = ( Buffers[ cur_buffer ][0], filename, Buffers[ cur_buffer ][2] )
+	Buffers[ CurrentBuffer ] = ( Buffers[ CurrentBuffer ][0], filename, Buffers[ CurrentBuffer ][2] )
 	saveFile()
 
 
 def saveFile( ) :
 
-	lines, filename, file = Buffers[ cur_buffer ]
+	lines, filename, file = Buffers[ CurrentBuffer ]
 	if filename == None :
 		saveFileAs()
 		return
@@ -134,7 +134,7 @@ def saveFile( ) :
 	file.close()
 
 	file = open(filename, 'r')	# reopen for reading ONLY
-	Buffers[ cur_buffer ] = (lines, filename, file)
+	Buffers[ CurrentBuffer ] = (lines, filename, file)
 	print "Saved %d lines!" % nlines
 
 
@@ -180,8 +180,10 @@ def writeFile( line = 0 ) :
 		return
 	global lines
 	for index in range(line, line + length) :
-		lines [index] = new_lines[ index - line ]
-
+		try :
+			lines [index] = new_lines[ index - line ]
+		except :
+			lines.append ( new_lines[ index - line ] )
 
 def perLineWrite() :
 	rand_str = os.urandom(4).encode('hex')
@@ -245,9 +247,12 @@ def replaceKeyword(keyword, replacement = '', line = '*', instance = '*') :
 	for index in line_range :
 		if instance != '*' :
 			splits = lines[index].split(keyword)
-			before = keyword.join( splits[:instance] )
-			after = keyword.join( splits[instance+1:] )
-			ret = replacement.join( [before] + [after] )
+			if len(splits) >= instance + 1 :
+				before = keyword.join( splits[:instance] )
+				after = keyword.join( splits[instance+1:] )
+				ret = replacement.join( [before] + [after] )
+			else :
+				ret = lines[index]
 		else :
 			ret = lines[index].replace(keyword, replacement)
 		lines[index] = ret
@@ -256,7 +261,9 @@ def replaceKeyword(keyword, replacement = '', line = '*', instance = '*') :
 
 
 Buffers = {'MAIN' : (lines, filename, file)}
-cur_buffer = 'MAIN'
+#	changes, commands
+UndoStacks = {'MAIN' : ([], [])}
+CurrentBuffer = 'MAIN'
 
 def bufferSelect ( buffer_ = None ) :
 
@@ -272,13 +279,87 @@ def bufferSelect ( buffer_ = None ) :
 	if buffer_ not in Buffers :
 		Buffers[ buffer_ ] = ([], None, None)
 		print "Created new Buffer '%s'" % buffer_
-	global cur_buffer
-	cur_buffer = buffer_
+	global CurrentBuffer
+	CurrentBuffer = buffer_
 	global lines
 	global filename
 	global file
 	lines, filename, file = Buffers[ buffer_ ] 
 	print "Changed to buffer '%s'" % buffer_
+
+
+
+
+import difflib
+import copy
+UndoLast = []
+UndoIndex = -1
+def __findChanges() :
+	if UndoLast == lines :
+		return None
+	try :
+		diff = difflib.ndiff(UndoLast, lines)
+		diff = list( diff )
+		# global UndoLast
+	except :
+		return None
+	return diff
+
+def __applyChanges( forward = False ) :
+
+	global lines
+	global UndoStacks
+	global UndoIndex
+	print "Index: %d" % UndoIndex
+
+	changes, stack = UndoStacks[CurrentBuffer]
+	change = changes[UndoIndex]
+	stack[UndoIndex]
+	if forward :
+		UndoIndex += +1
+		lines = (''.join( difflib.restore(change, 2)) ).splitlines(1)
+	else :
+		UndoIndex += -1
+		lines = (''.join( difflib.restore(change, 1)) ).splitlines(1)
+	# print lines
+
+def __undoReady() :
+	global UndoLast
+	# if not UndoLast :
+	UndoLast = copy.deepcopy(lines)
+
+def __undoRecord( comm, args ) :
+	if comm == 'undo' or comm == 'redo' :
+		return
+	exec_line = "%s %s" % ( comm, ' '.join(args) )
+	changes, stack = UndoStacks[CurrentBuffer]
+	change = __findChanges()
+	if change == None :
+		return
+	if UndoIndex < len(stack) -1 :
+		stack[UndoIndex] = exec_line
+		changes[UndoIndex] = change
+	else :
+		stack.append( exec_line )
+		changes.append( change )
+		global UndoIndex
+		UndoIndex += 1
+	# UndoLast = ''	# to tell the Garbage Collection to delete the string copy
+	# print diff
+
+
+def undoChange() :
+	if UndoIndex >= 0 :
+		__applyChanges()
+	else :
+		print "No changes have been made!"
+
+def redoChange() :
+	if UndoIndex < len(UndoStacks[CurrentBuffer][0]) - 1:
+	# if len(UndoStacks[CurrentBuffer][0]) > 0 :
+		__applyChanges( forward = True )
+	else :
+		print "This is the last buffer version!"
 
 
 
@@ -300,13 +381,16 @@ commands = {
 "replace" : (replaceKeyword, "Replaces a given keyword with a given replacement (defaults to ''). A specific line and instance of the keyword can be given as arguments." ),
 "write" : (writeFile, "Starts a line editor and replaces the current buffer with the written content. The replacement starts from the line given as argument"),
 
-"buffer" : (bufferSelect, "Selects the buffer to work on")
+"buffer" : (bufferSelect, "Selects the buffer to work on"),
+
+"undo" : (undoChange, "Undoes the last change"),
+"redo" : (redoChange, "Redoes the last change")
 }
 
 
 while True :
 	try :
-		comm = raw_input("Editor (Buffer: %s @ %s)> " % (cur_buffer, Buffers[cur_buffer][1]))
+		comm = raw_input("Editor (Buffer: %s @ %s)> " % (CurrentBuffer, Buffers[CurrentBuffer][1]))
 	except KeyboardInterrupt:
 		print
 		print "Pressed Ctrl+C. Type 'quit' to exit."
@@ -321,11 +405,14 @@ while True :
 	args = [ autoconvert(tok) for tok in tokens[1:] ]
 	if comm in commands.keys() :
 		try :
+			__undoReady()
 			commands[comm][0](*args)
+			__undoRecord(comm, args)
+
 		except Exception as e:
-			print e
+			print e, sys.exc_info()
 			print "Command '%s' needs more parameters. Check 'help'." % comm
 
 	else :
 		print "Command '%s' not found." % comm
-		print "Type 'help' for a list of commands"
+		print "Type 'help' for a list of commands or 'quit' to exit the Editor."
