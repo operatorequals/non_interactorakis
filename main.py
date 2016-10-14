@@ -33,7 +33,7 @@ def autoconvert(s):
 
 try :
 	filename = sys.argv[1]
-	file = open(filename, 'r+')
+	file = open(filename, 'r')
 
 	if not sys.stdin.isatty() : execTTY()	# checks if it executes in a TTY
 						# if not it spawns one and forks to it
@@ -54,12 +54,12 @@ counter = 0
 def lessFile(less_step = Less_step) :
 
 #	if less_step != Less_step :
+	global Less_step
 	global counter
 	if less_step == 0 :
 		counter = 0
 		less_step = Less_step
 
-	global Less_step
 	Less_step = less_step
 
 	if counter + less_step > len(lines) :
@@ -121,6 +121,7 @@ def clearFile() :
 
 
 def exitEditor() :
+	global file
 	file.close()
 	sys.exit(0)
 
@@ -217,7 +218,8 @@ while True :
 	if comm.lower() in commands.keys() :
 		try :
 			commands[comm][0](*args)
-		except :
+		except Exception as e:
+			# print e
 			print "Command '%s' needs more parameters. Check 'help'." % comm
 
 	else :
