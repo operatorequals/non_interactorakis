@@ -266,6 +266,7 @@ commands = {
 "display" : (displayFile, "Displays the whole or a portion of the file.\nExample: display [starting_line], [ending_line]"), 
 "edit" : (editLine, "Edit a specific line.\nExample: edit <line_to_edit>"),
 "save" : (saveFile, "Save file changes.\nExample: save"),
+"saveas" : (saveFileAs, "Save buffer to new File.\nExample: saveas test.txt"),
 "quit" : (exitEditor, "Exits the Editor"),
 "help" : (showHelp, "Shows list of commands and examples"),
 "less" : (lessFile, "A 'less' like way to view the file. Uses an optional 'step' argument"),
