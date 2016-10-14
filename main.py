@@ -78,9 +78,9 @@ def displayFile(start = 0, stop = None, lines_ = None) :
 		lines_ = lines
 	if stop == None :
 		stop = len(lines_)
-	if stop > len(lines) :
+	if stop > len(lines_) :
 		stop = len(lines_)
-	for number in range(start,stop) :
+	for number in range(start, stop) :
 		print "{0:4} ~ {1}" .format (number, lines_[number]),
 	print
 
@@ -206,13 +206,17 @@ def searchRegex(regex) :
 
 Buffers = {'MAIN' : (lines, filename, file)}
 cur_buffer = 'MAIN'
+
 def bufferSelect ( buffer_ = None ) :
 
 	if buffer_ == None :
 		print "Buffers:"
 
 		for br in Buffers.keys() :
-			print " ~ %s" % br
+			print "\t[-] {} \t({} lines) -\t@ file:{}".format \
+				( br, len(Buffers[br][0]), Buffers[br][1]  )
+			displayFile( 0, 2, lines_ = Buffers[br][0] )
+			# print
 		return
 
 	Buffers[ buffer_ ] = ([], None, None)
