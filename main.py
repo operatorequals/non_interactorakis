@@ -103,13 +103,24 @@ def showHelp() :
 	print "=" * 20
 
 
-def saveFile() :
+def saveFileAs( given_filename = None ) :
+
 	global Buffers
-	lines, filename, file = Buffers[ cur_buffer ]
-	if file == None :
+	if (given_filename == None) :
 		filename = raw_input("Select filename/filepath to Save: ")
 	else :
-		file.close()			# close the reading descriptor
+		filename = given_filename
+
+	Buffers[ cur_buffer ] = ( Buffers[ cur_buffer ][0], filename, Buffers[ cur_buffer ][2] )
+	saveFile()
+
+
+def saveFile( ) :
+
+	lines, filename, file = Buffers[ cur_buffer ]
+	if filename == None :
+		saveFileAs()
+		return
 
 	toSave = ''.join( lines )
 	nlines = len( lines )
@@ -233,19 +244,21 @@ def bufferSelect ( buffer_ = None ) :
 		print "Buffers:"
 
 		for br in Buffers.keys() :
-			print "\t[-] {} \t({} lines) -\t@ file:{}".format \
+			print "\t[-] {:<10} \t({:<4} lines) -\t@ file:{}".format \
 				( br, len(Buffers[br][0]), Buffers[br][1]  )
 			displayFile( 0, 2, lines_ = Buffers[br][0] )
 		return
 
-	Buffers[ buffer_ ] = ([], None, None)
+	if buffer_ not in Buffers :
+		Buffers[ buffer_ ] = ([], None, None)
+		print "Created new Buffer '%s'" % buffer_
 	global cur_buffer
 	cur_buffer = buffer_
 	global lines
 	global filename
 	global file
 	lines, filename, file = Buffers[ buffer_ ] 
-	print "Created new Buffer '%s'" % buffer_
+	print "Changed to buffer '%s'" % buffer_
 
 
 
@@ -288,7 +301,7 @@ while True :
 		try :
 			commands[comm][0](*args)
 		except Exception as e:
-			# print e
+			print e
 			print "Command '%s' needs more parameters. Check 'help'." % comm
 
 	else :
