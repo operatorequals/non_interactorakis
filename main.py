@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
-
 import sys
 import os
 import pty
+import re
+
 
 def execTTY() :
 	import tty
@@ -47,6 +48,7 @@ except Exception as e:
 print "==== File to edit '%s' ====" % filename
 print "Use 'quit' (NOT 'exit') to exit the editor..."
 lines = file.readlines()
+
 
 
 Less_step = 10
@@ -102,15 +104,26 @@ def showHelp() :
 
 
 def saveFile() :
+	global Buffers
+	lines, filename, file = Buffers[ cur_buffer ]
+	if file == None :
+		filename = raw_input("Select filename/filepath to Save: ")
+	else :
+		file.close()			# close the reading descriptor
+
 	toSave = ''.join( lines )
-	nlines = len(lines)
-	global file			# close the reading descriptor
-	file.close()
-	file = open(filename, 'w')	# purge content
-	file.write(toSave)		# write whole new content
+	nlines = len( lines )
+	try :
+		file = open(filename, 'w')	# purge content
+	except :
+		print "Cannot write to '%s'. Didn't save." % filename
+		return
+
+	file.write(toSave)			# write whole new content
 	file.close()
 
-	file = open(filename, 'r')	# reopen for reading
+	file = open(filename, 'r')	# reopen for reading ONLY
+	Buffers[ cur_buffer ] = (lines, filename, file)
 	print "Saved %d lines!" % nlines
 
 
@@ -156,10 +169,12 @@ def perLineWrite() :
 	return buffer
 
 
-def insertLine( line_n = len(lines) ) :
+def insertLine( line_n = None ) :
+	global lines
+	if line_n == None :
+		line_n = len(lines)
 	print "Type the line to insert at line number %d" % line_n
 	line = raw_input("!> ")
-	global lines
 	lines.insert( line_n, line + os.linesep )
 
 
@@ -179,7 +194,7 @@ def searchLines(keyword) :
 			ans.append( line )
 	displayFile(lines_ = ans)
 
-import re
+
 def searchRegex(regex) :
 	ans = []
 	for line in lines :
@@ -187,6 +202,27 @@ def searchRegex(regex) :
 		if match :
 			ans.append( line )
 	displayFile(lines_ = ans)
+
+
+Buffers = {'MAIN' : (lines, filename, file)}
+cur_buffer = 'MAIN'
+def bufferSelect ( buffer_ = None ) :
+
+	if buffer_ == None :
+		print "Buffers:"
+
+		for br in Buffers.keys() :
+			print " ~ %s" % br
+		return
+
+	Buffers[ buffer_ ] = ([], None, None)
+	global cur_buffer
+	cur_buffer = buffer_
+	global lines
+	global filename
+	global file
+	lines, filename, file = Buffers[ buffer_ ] 
+	print "Created new Buffer '%s'" % buffer_
 
 
 commands = {
@@ -202,12 +238,14 @@ commands = {
 "search" : (searchLines, "Searches all lines for a keyword given as argument"),
 "regex" : (searchRegex, "Searces all lines for regex given as argument"),
 "insert" : (insertLine, "Type the line to insert at the line number specified as argument (default appends the line to the file)"),
-"delete" : (deleteLine, "Deletes the line at the line number specified as argument" )
+"delete" : (deleteLine, "Deletes the line at the line number specified as argument" ),
+
+"buffer" : (bufferSelect, "Selects the buffer to work on")
 }
 
 
 while True :
-	comm = raw_input("Editor> ")
+	comm = raw_input("Editor (Buffer: %s @ %s)> " % (cur_buffer, Buffers[cur_buffer][1]))
 	if not comm :
 		continue
 
