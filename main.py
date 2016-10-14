@@ -203,6 +203,27 @@ def searchRegex(regex) :
 	displayFile(lines_ = ans)
 
 
+def replaceKeyword(keyword, replacement = '', line = '*', instance = '*') :
+	global lines
+
+	if line == '*' :
+		line_range =range( len(lines) )
+	else :
+		line_range = [line]
+
+	for index in line_range :
+		if instance != '*' :
+			splits = lines[index].split(keyword)
+			before = keyword.join( splits[:instance] )
+			after = keyword.join( splits[instance+1:] )
+			ret = replacement.join( [before] + [after] )
+		else :
+			ret = lines[index].replace(keyword, replacement)
+		lines[index] = ret
+
+
+
+
 Buffers = {'MAIN' : (lines, filename, file)}
 cur_buffer = 'MAIN'
 
@@ -227,6 +248,7 @@ def bufferSelect ( buffer_ = None ) :
 	print "Created new Buffer '%s'" % buffer_
 
 
+
 commands = {
 "display" : (displayFile, "Displays the whole or a portion of the file.\nExample: display [starting_line], [ending_line]"), 
 "edit" : (editLine, "Edit a specific line.\nExample: edit <line_to_edit>"),
@@ -241,6 +263,7 @@ commands = {
 "regex" : (searchRegex, "Searces all lines for regex given as argument"),
 "insert" : (insertLine, "Type the line to insert at the line number specified as argument (default appends the line to the file)"),
 "delete" : (deleteLine, "Deletes the line at the line number specified as argument" ),
+"replace" : (replaceKeyword, "Replaces a given keyword with a given replacement (defaults to ''). A specific line and instance of the keyword can be given as arguments." ),
 
 "buffer" : (bufferSelect, "Selects the buffer to work on")
 }
