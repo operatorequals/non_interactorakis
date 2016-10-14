@@ -163,6 +163,26 @@ def overwriteFile() :
 	print "Wrote %d lines! Changes HAVEN'T been saved" % (len(lines))
 
 
+def writeFile( line = 0 ) :
+
+	new_lines = perLineWrite()
+	# new_lines = perLineWrite().split( os.linesep )
+	length = len(new_lines)
+	print "You are about to replace:"
+	print "="*20
+	print displayFile( line, line+length )
+	print "="*20
+	print "With:"
+	print displayFile( 0, length, lines_ = new_lines )
+	option = raw_input("Are you sure? [y/N]")
+	if not (option.lower() == 'y' or option.lower() == 'yes') :
+		print "Aborted"
+		return
+	global lines
+	for index in range(line, line + length) :
+		lines [index] = new_lines[ index - line ]
+
+
 def perLineWrite() :
 	rand_str = os.urandom(4).encode('hex')
 	print "Type '%s' to return to Editor Prompt" % rand_str
@@ -278,6 +298,7 @@ commands = {
 "insert" : (insertLine, "Type the line to insert at the line number specified as argument (default appends the line to the file)"),
 "delete" : (deleteLine, "Deletes the line at the line number specified as argument" ),
 "replace" : (replaceKeyword, "Replaces a given keyword with a given replacement (defaults to ''). A specific line and instance of the keyword can be given as arguments." ),
+"write" : (writeFile, "Starts a line editor and replaces the current buffer with the written content. The replacement starts from the line given as argument"),
 
 "buffer" : (bufferSelect, "Selects the buffer to work on")
 }
@@ -308,7 +329,3 @@ while True :
 	else :
 		print "Command '%s' not found." % comm
 		print "Type 'help' for a list of commands"
-
-
-#	if comm == 'help' :
-#		showHelp()
