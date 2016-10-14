@@ -153,8 +153,7 @@ def overwriteFile() :
 
 
 def perLineWrite() :
-
-	rand_str = os.urandom(8).encode('hex')
+	rand_str = os.urandom(4).encode('hex')
 	print "Type '%s' to return to Editor Prompt" % rand_str
 
         buffer = []
@@ -216,7 +215,6 @@ def bufferSelect ( buffer_ = None ) :
 			print "\t[-] {} \t({} lines) -\t@ file:{}".format \
 				( br, len(Buffers[br][0]), Buffers[br][1]  )
 			displayFile( 0, 2, lines_ = Buffers[br][0] )
-			# print
 		return
 
 	Buffers[ buffer_ ] = ([], None, None)
@@ -249,15 +247,21 @@ commands = {
 
 
 while True :
-	comm = raw_input("Editor (Buffer: %s @ %s)> " % (cur_buffer, Buffers[cur_buffer][1]))
+	try :
+		comm = raw_input("Editor (Buffer: %s @ %s)> " % (cur_buffer, Buffers[cur_buffer][1]))
+	except KeyboardInterrupt:
+		print
+		print "Pressed Ctrl+C. Type 'quit' to exit."
+		comm = ''
+
 	if not comm :
 		continue
 
 	tokens = comm.split()
-	comm = tokens[0]
+	comm = tokens[0].lower()
 
 	args = [ autoconvert(tok) for tok in tokens[1:] ]
-	if comm.lower() in commands.keys() :
+	if comm in commands.keys() :
 		try :
 			commands[comm][0](*args)
 		except Exception as e:
