@@ -4,6 +4,8 @@ import sys
 import os
 import pty
 import re
+import difflib
+import copy
 
 
 def execTTY() :
@@ -49,6 +51,10 @@ print "==== File to edit '%s' ====" % filename
 print "Use 'quit' (NOT 'exit') to exit the editor..."
 lines = file.readlines()
 
+
+def __askForConfirmation() :
+	option = raw_input("Are you sure? [y/N]")
+	return (option.lower() == 'y' or option.lower() == 'yes')
 
 
 Less_step = 10
@@ -153,8 +159,7 @@ def exitEditor() :
 def overwriteFile() :
 	rand_str = os.urandom(8).encode('hex')
 	print "You are about to overwrite the whole file."
-	option = raw_input("Are you sure? [y/N]")
-	if not (option.lower() == 'y' or option.lower() == 'yes') :
+	if not __askForConfirmation() :
 		print "Aborted"
 		return
 
@@ -174,8 +179,8 @@ def writeFile( line = 0 ) :
 	print "="*20
 	print "With:"
 	print displayFile( 0, length, lines_ = new_lines )
-	option = raw_input("Are you sure? [y/N]")
-	if not (option.lower() == 'y' or option.lower() == 'yes') :
+	
+	if not __askForConfirmation() :
 		print "Aborted"
 		return
 	global lines
@@ -184,6 +189,7 @@ def writeFile( line = 0 ) :
 			lines [index] = new_lines[ index - line ]
 		except :
 			lines.append ( new_lines[ index - line ] )
+
 
 def perLineWrite() :
 	rand_str = os.urandom(4).encode('hex')
@@ -276,22 +282,35 @@ def bufferSelect ( buffer_ = None ) :
 			displayFile( 0, 2, lines_ = Buffers[br][0] )
 		return
 
-	if buffer_ not in Buffers :
+	if buffer_ not in Buffers.keys() :
 		Buffers[ buffer_ ] = ([], None, None)
+		UndoStacks[buffer_] = ([], [])
 		print "Created new Buffer '%s'" % buffer_
-	global CurrentBuffer
-	CurrentBuffer = buffer_
-	global lines
-	global filename
-	global file
-	lines, filename, file = Buffers[ buffer_ ] 
+	__changeToBuffer( buffer_ )
 	print "Changed to buffer '%s'" % buffer_
 
 
+def bufferCopy ( buffer_ ) :
+
+	global Buffers
+	if buffer_ in Buffers.keys() :
+		if not __askForConfirmation() :
+			print "Aborted"
+			return
+	Buffers[buffer_] = copy.deepcopy(Buffers[CurrentBuffer])
+	UndoStacks[buffer_] = ([], [])
+	print "Current buffer copied to '%s'" % buffer_
 
 
-import difflib
-import copy
+def __changeToBuffer( buffer_ = 'MAIN' ) :
+	global lines
+	global filename
+	global file
+	global CurrentBuffer
+	CurrentBuffer = buffer_
+	lines, filename, file = Buffers[ buffer_ ] 
+
+
 UndoLast = []
 UndoIndex = -1
 ExcludeCommands = ['history']
@@ -312,7 +331,8 @@ def __applyChanges( forward = False ) :
 	global lines
 	global UndoStacks
 	global UndoIndex
-	changes, stack = UndoStacks[CurrentBuffer]
+	# changes, stack, undoIndex = UndoStacks[CurrentBuffer]
+	changes, stack, undoIndex = UndoStacks[CurrentBuffer]
 	change = changes[UndoIndex]
 	stack[UndoIndex]
 	if forward :
@@ -404,6 +424,7 @@ commands = {
 "write" : (writeFile, "Starts a line editor and replaces the current buffer with the written content. The replacement starts from the line given as argument"),
 
 "buffer" : (bufferSelect, "Selects the buffer to work on"),
+"cpbuffer" : (bufferCopy, "Copies the Current Buffer to the specified on. Creates it if non-existent."),
 
 "undo" : (undoChange, "Undoes the last change"),
 "redo" : (redoChange, "Redoes the last change"),
