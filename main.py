@@ -6,12 +6,13 @@ import pty
 import re
 import difflib
 import copy
-
+# 	pyminifier  --use-tabs --obfuscate-variables main.py > minified.py
+#=====================================================================================================
 
 def execTTY() :
 	import tty
 #	print "Getting TTY..."
-	fileno = sys.stdin.fileno()
+	# fileno = sys.stdin.fileno()
 #	tty.setraw(fileno)
 #	tty.setcbreak(fileno)
 	pty.spawn(["./%s" % sys.argv[0], sys.argv[1]])	# respawns the process in TTY
@@ -19,19 +20,20 @@ def execTTY() :
 
 
 def boolify(s):
-    if s == 'True':
-        return True
-    if s == 'False':
-        return False
-    raise ValueError("huh?")
+	if s == 'True':
+		return True
+	if s == 'False':
+		return False
+	raise ValueError("huh?")
 
 def autoconvert(s):
-    for fn in (boolify, int, float):
-        try:
-            return fn(s)
-        except ValueError:
-            pass
-    return s
+	for fn in (boolify, int, float):
+		try:
+			return fn(s)
+		except ValueError:
+			pass
+	return s
+#=====================================================================================================
 
 
 try :
@@ -57,6 +59,7 @@ def __askForConfirmation() :
 	return (option.lower() == 'y' or option.lower() == 'yes')
 
 
+#=====================================================================================================
 Less_step = 10
 counter = 0
 def lessFile(less_step = Less_step) :
@@ -195,14 +198,14 @@ def perLineWrite() :
 	rand_str = os.urandom(4).encode('hex')
 	print "Type '%s' to return to Editor Prompt" % rand_str
 
-        buffer = []
-        i = 0
-        line = ''
-        while line.rstrip() != rand_str :
-                line = raw_input( "{:4}> ".format(i) )
-                buffer.append( line + os.linesep )
-                i += 1
-        buffer = buffer[:-1]      # remove the hash added at the end
+	buffer = []
+	i = 0
+	line = ''
+	while line.rstrip() != rand_str :
+			line = raw_input( "{:4}> ".format(i) )
+			buffer.append( line + os.linesep )
+			i += 1
+	buffer = buffer[:-1]	  # remove the hash added at the end
 
 	return buffer
 
@@ -264,11 +267,10 @@ def replaceKeyword(keyword, replacement = '', line = '*', instance = '*') :
 		lines[index] = ret
 
 
-
-
+#=====================================================================================================
 Buffers = {'MAIN' : (lines, filename, file)}
 #	changes, commands
-UndoStacks = {'MAIN' : ([], [])}
+UndoStacks = {'MAIN' : ([], [], -1)}
 CurrentBuffer = 'MAIN'
 
 def bufferSelect ( buffer_ = None ) :
@@ -284,7 +286,7 @@ def bufferSelect ( buffer_ = None ) :
 
 	if buffer_ not in Buffers.keys() :
 		Buffers[ buffer_ ] = ([], None, None)
-		UndoStacks[buffer_] = ([], [])
+		UndoStacks[buffer_] = ([], [], -1)
 		print "Created new Buffer '%s'" % buffer_
 	__changeToBuffer( buffer_ )
 	print "Changed to buffer '%s'" % buffer_
@@ -298,7 +300,7 @@ def bufferCopy ( buffer_ ) :
 			print "Aborted"
 			return
 	Buffers[buffer_] = copy.deepcopy(Buffers[CurrentBuffer])
-	UndoStacks[buffer_] = ([], [])
+	UndoStacks[buffer_] = ([], [], -1)		# fresh new history
 	print "Current buffer copied to '%s'" % buffer_
 
 
@@ -307,13 +309,19 @@ def __changeToBuffer( buffer_ = 'MAIN' ) :
 	global filename
 	global file
 	global CurrentBuffer
-	CurrentBuffer = buffer_
 	lines, filename, file = Buffers[ buffer_ ] 
+	global UndoIndex
+	global UndoLast
+	UndoStacks[CurrentBuffer] = (UndoStacks[CurrentBuffer][0], UndoStacks[CurrentBuffer][1], UndoIndex)
+	UndoIndex = UndoStacks[buffer_][2]
+	CurrentBuffer = buffer_
+	UndoLast = ''
 
 
-UndoLast = []
+#=====================================================================================================
+UndoLast = ''
 UndoIndex = -1
-ExcludeCommands = ['history']
+ExcludeCommands = ['history', 'buffer', 'cpbuffer']
 # ExcludeCommands = ['redo', 'undo', 'history']
 def __findChanges() :
 	if UndoLast == lines :
@@ -321,7 +329,6 @@ def __findChanges() :
 	try :
 		diff = difflib.ndiff(UndoLast, lines)
 		diff = list( diff )
-		# global UndoLast
 	except :
 		return None
 	return diff
@@ -331,7 +338,6 @@ def __applyChanges( forward = False ) :
 	global lines
 	global UndoStacks
 	global UndoIndex
-	# changes, stack, undoIndex = UndoStacks[CurrentBuffer]
 	changes, stack, undoIndex = UndoStacks[CurrentBuffer]
 	change = changes[UndoIndex]
 	stack[UndoIndex]
@@ -354,7 +360,7 @@ def __undoRecord( comm, args ) :
 		return
 	args_ = ' '.join([str(arg) for arg in args])
 	exec_line = "%s %s" % ( comm, args_ )
-	changes, stack = UndoStacks[CurrentBuffer]
+	changes, stack, undoIndex = UndoStacks[CurrentBuffer]
 	change = __findChanges()
 	if change == None :
 		return
@@ -383,7 +389,7 @@ def redoChange() :
 
 
 def showHistory() :
-	changes, stack = UndoStacks[CurrentBuffer]
+	changes, stack, undoIndex = UndoStacks[CurrentBuffer]
 	print
 	if not changes :
 		print "No history available!"
@@ -391,7 +397,8 @@ def showHistory() :
 	print "States : %d. Current State : %d" % (len(changes), UndoIndex+1)
 	print "="*20
 	undoIndex = 0
-	for change, command in zip(*UndoStacks[CurrentBuffer]) :
+	hist_info = UndoStacks[CurrentBuffer][0:2]
+	for change, command in zip( *hist_info ) :
 		if undoIndex == UndoIndex :
 			arrow = '-->'
 		else :
@@ -404,6 +411,9 @@ def showHistory() :
 		undoIndex += 1
 		print '-'*20
 	print 
+
+#=====================================================================================================
+
 
 commands = {
 "display" : (displayFile, "Displays the whole or a portion of the file.\nExample: display [starting_line], [ending_line]"), 
