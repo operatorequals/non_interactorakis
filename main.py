@@ -294,6 +294,8 @@ import difflib
 import copy
 UndoLast = []
 UndoIndex = -1
+ExcludeCommands = ['history']
+# ExcludeCommands = ['redo', 'undo', 'history']
 def __findChanges() :
 	if UndoLast == lines :
 		return None
@@ -310,18 +312,16 @@ def __applyChanges( forward = False ) :
 	global lines
 	global UndoStacks
 	global UndoIndex
-	print "Index: %d" % UndoIndex
-
 	changes, stack = UndoStacks[CurrentBuffer]
 	change = changes[UndoIndex]
 	stack[UndoIndex]
 	if forward :
-		UndoIndex += +1
+		UndoIndex += 1
 		lines = (''.join( difflib.restore(change, 2)) ).splitlines(1)
 	else :
-		UndoIndex += -1
+		UndoIndex -= 1
 		lines = (''.join( difflib.restore(change, 1)) ).splitlines(1)
-	# print lines
+	print "Index: %d" % UndoIndex
 
 def __undoReady() :
 	global UndoLast
@@ -329,21 +329,22 @@ def __undoReady() :
 	UndoLast = copy.deepcopy(lines)
 
 def __undoRecord( comm, args ) :
-	if comm == 'undo' or comm == 'redo' :
+	global UndoIndex
+	if comm in ExcludeCommands :
 		return
-	exec_line = "%s %s" % ( comm, ' '.join(args) )
+	args_ = ' '.join([str(arg) for arg in args])
+	exec_line = "%s %s" % ( comm, args_ )
 	changes, stack = UndoStacks[CurrentBuffer]
 	change = __findChanges()
 	if change == None :
 		return
-	if UndoIndex < len(stack) -1 :
+	if UndoIndex < len(stack) - 1 :
 		stack[UndoIndex] = exec_line
 		changes[UndoIndex] = change
 	else :
 		stack.append( exec_line )
 		changes.append( change )
-		global UndoIndex
-		UndoIndex += 1
+	UndoIndex += 1
 	# UndoLast = ''	# to tell the Garbage Collection to delete the string copy
 	# print diff
 
@@ -355,13 +356,34 @@ def undoChange() :
 		print "No changes have been made!"
 
 def redoChange() :
-	if UndoIndex < len(UndoStacks[CurrentBuffer][0]) - 1:
-	# if len(UndoStacks[CurrentBuffer][0]) > 0 :
+	if UndoIndex < len(UndoStacks[CurrentBuffer][0]) -1 :
 		__applyChanges( forward = True )
 	else :
 		print "This is the last buffer version!"
 
 
+def showHistory() :
+	changes, stack = UndoStacks[CurrentBuffer]
+	print
+	if not changes :
+		print "No history available!"
+		return
+	print "States : %d. Current State : %d" % (len(changes), UndoIndex+1)
+	print "="*20
+	undoIndex = 0
+	for change, command in zip(*UndoStacks[CurrentBuffer]) :
+		if undoIndex == UndoIndex :
+			arrow = '-->'
+		else :
+			arrow = '  '
+
+		print "%s Command: %s" % (arrow, command)
+		for index, line in enumerate(change) :
+			if line.startswith('+') or line.startswith('-') :
+				print "Line: %d> %s" %(index, line[:-1])
+		undoIndex += 1
+		print '-'*20
+	print 
 
 commands = {
 "display" : (displayFile, "Displays the whole or a portion of the file.\nExample: display [starting_line], [ending_line]"), 
@@ -384,7 +406,8 @@ commands = {
 "buffer" : (bufferSelect, "Selects the buffer to work on"),
 
 "undo" : (undoChange, "Undoes the last change"),
-"redo" : (redoChange, "Redoes the last change")
+"redo" : (redoChange, "Redoes the last change"),
+"history" : (showHistory, "Displays history of the current buffer")
 }
 
 
@@ -407,11 +430,11 @@ while True :
 		try :
 			__undoReady()
 			commands[comm][0](*args)
-			__undoRecord(comm, args)
 
 		except Exception as e:
-			print e, sys.exc_info()
+			print sys.exc_info()
 			print "Command '%s' needs more parameters. Check 'help'." % comm
+		__undoRecord(comm, args)
 
 	else :
 		print "Command '%s' not found." % comm
