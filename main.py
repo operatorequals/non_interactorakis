@@ -9,6 +9,7 @@ import copy
 import argparse
 import platform
 
+
 #	 pyminifier  --use-tabs --obfuscate-variables main.py > minified.py
 #=====================================================================================================
 
