@@ -14,7 +14,6 @@ import platform
 #=====================================================================================================
 
 def execTTY() :
-	print "[*] Got TTY: %s" % os.popen("tty").read().strip()
 	import pty
 	# import tty
 	# fileno = sys.stdin.fileno()
@@ -42,8 +41,9 @@ def autoconvert(s):
 def isWindows() :
 	return "windows" in platform.platform().lower()
 #=====================================================================================================
+if not sys.stdin.isatty() and not isWindows() : execTTY()	# checks if it executes in a TTY
+print "[*] Got TTY: %s" % os.popen("tty").read().strip()
 
-if not sys.stdin.isatty() and isWindows : execTTY()	# checks if it executes in a TTY
 print 
 
 Buffers = {}
@@ -57,7 +57,7 @@ args = parser.parse_args()
 # print args
 if not args.file :
 	file_lines = []
-	buffername = "%s-%s" % ("Buffer", os.urandom(1).encode('hex') )
+	buffername = "%s-(%s)" % ("Buffer", os.urandom(1).encode('hex') )
 	Buffers[buffername] = (file_lines, None, None)
 	UndoStacks[buffername] = ([], [], -1)
 	CurrentBuffer = buffername
