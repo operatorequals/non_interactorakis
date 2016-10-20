@@ -10,7 +10,7 @@ import argparse
 import platform
 
 
-#	 pyminifier  --use-tabs --obfuscate-variables main.py > minified.py
+#	pyminifier  --use-tabs --obfuscate-variables main.py > minified.py
 #=====================================================================================================
 
 def execTTY() :
@@ -25,17 +25,17 @@ def execTTY() :
 
 def boolify(s):
 	if s == 'True':
-		 return True
+		return True
 	if s == 'False':
-		 return False
+		return False
 	raise ValueError("huh?")
 
 def autoconvert(s):
 	for fn in (boolify, int, float):
-		 try:
-			  return fn(s)
-		 except ValueError:
-			  pass
+		try:
+			 return fn(s)
+		except ValueError:
+			 pass
 	return s
 
 def isWindows() :
@@ -67,26 +67,26 @@ for file_ in args.file :
 	# try :
 	full_path = os.path.abspath(file_)
 	if os.path.isfile(full_path) :
-		 file_handler = open(full_path, 'r')
-		 file_lines = file_handler.readlines()
-		 print "[+] File '%s' opened!" % file_
+		file_handler = open(full_path, 'r')
+		file_lines = file_handler.readlines()
+		print "[+] File '%s' opened!" % file_
 	else :
-		 print "[!] File: '%s' doesn't exist. Will be created when you save your buffer." % file_
-		 # file_handler = open(full_path, 'w')
-		 file_handler = None
-		 file_lines = []
+		print "[!] File: '%s' doesn't exist. Will be created when you save your buffer." % file_
+		# file_handler = open(full_path, 'w')
+		file_handler = None
+		file_lines = []
 
 	buffername = "%s-%s" % (full_path.split(os.path.sep)[-1], os.urandom(1).encode('hex') )
 	Buffers[buffername] = (file_lines, full_path, file_handler)
 	UndoStacks[buffername] = ([], [], -1)
 	CurrentBuffer = buffername
-		 # sys.exit(-1)
+		# sys.exit(-1)
 
 	# except Exception as e:
-	#	 print e
-	#	 # print "Usage:"
-	#	 # print "	%s file_to_edit" % sys.argv[0]
-	#	 sys.exit(1)
+	#	print e
+	#	# print "Usage:"
+	#	# print "	%s file_to_edit" % sys.argv[0]
+	#	sys.exit(1)
 
 
 
@@ -104,29 +104,29 @@ def lessFile(less_step = Less_step) :
 	global Less_step
 	global counter
 	if less_step == 0 :
-		 counter = 0
-		 less_step = Less_step
+		counter = 0
+		less_step = Less_step
 
 	Less_step = less_step
 
 	if counter + less_step > len(lines) :
-		 less_step = len(lines) - counter
+		less_step = len(lines) - counter
 
 	displayFile(counter, counter+less_step)
 	counter += less_step
 	if counter >= len(lines) :
-		 counter = 0
+		counter = 0
 
 
 def displayFile(start = 0, stop = None, lines_ = None) :
 	if lines_ == None :
-		 lines_ = lines
+		lines_ = lines
 	if stop == None :
-		 stop = len(lines_)
+		stop = len(lines_)
 	if stop > len(lines_) :
-		 stop = len(lines_)
+		stop = len(lines_)
 	for number in range(start, stop) :
-		 print "{0:4} ~ {1}" .format (number, lines_[number]),
+		print "{0:4} ~ {1}" .format (number, lines_[number]),
 	print
 
 
@@ -144,13 +144,13 @@ def editLine(line_n) :
 def showHelp() :
 	print "=" * 20
 	for comm in commands.keys() :
-		 print "[+] {0}\t- {1}".format(comm, commands[comm][1])
-		 try :
-			  example = commands[comm][2]
-			  print "ex. %s" % example 
-		 except :
-			  pass
-		 print 
+		print "[+] {0}\t- {1}".format(comm, commands[comm][1])
+		try :
+			 example = commands[comm][2]
+			 print "ex. %s" % example 
+		except :
+			 pass
+		print 
 	print "=" * 20
 
 
@@ -158,9 +158,9 @@ def saveFileAs( given_filename = None ) :
 
 	global Buffers
 	if (given_filename == None) :
-		 filename = raw_input("Select filename/filepath to Save: ")
+		filename = raw_input("Select filename/filepath to Save: ")
 	else :
-		 filename = given_filename
+		filename = given_filename
 
 	Buffers[ CurrentBuffer ] = ( Buffers[ CurrentBuffer ][0], filename, Buffers[ CurrentBuffer ][2] )
 	saveFile()
@@ -170,18 +170,18 @@ def saveFile( ) :
 
 	lines, filename, file = Buffers[ CurrentBuffer ]
 	if filename == None :
-		 saveFileAs()
-		 return
+		saveFileAs()
+		return
 
 	toSave = ''.join( lines )
 	nlines = len( lines )
 	try :
-		 file = open(filename, 'w')	# purge content
+		file = open(filename, 'w')	# purge content
 	except :
-		 print "Cannot write to '%s'. Didn't save." % filename
-		 return
+		print "Cannot write to '%s'. Didn't save." % filename
+		return
 
-	file.write(toSave)			  # write whole new content
+	file.write(toSave)			 # write whole new content
 	file.close()
 
 	file = open(filename, 'r')	# reopen for reading ONLY
@@ -198,8 +198,8 @@ def clearFile() :
 def exitEditor() :
 	global file
 	for lines, filename, file in Buffers.values() :
-		 if file :
-			  file.close()
+		if file :
+			 file.close()
 	sys.exit(0)
 
 
@@ -207,8 +207,8 @@ def overwriteFile() :
 	rand_str = os.urandom(8).encode('hex')
 	print "You are about to overwrite the whole file."
 	if not __askForConfirmation() :
-		 print "Aborted"
-		 return
+		print "Aborted"
+		return
 
 	global lines
 	lines = perLineWrite()
@@ -227,14 +227,14 @@ def writeFile( line = 0 ) :
 	print displayFile( 0, length, lines_ = new_lines )
 	
 	if not __askForConfirmation() :
-		 print "Aborted"
-		 return
+		print "Aborted"
+		return
 	global lines
 	for index in range(line, line + length) :
-		 try :
-			  lines [index] = new_lines[ index - line ]
-		 except :
-			  lines.append ( new_lines[ index - line ] )
+		try :
+			 lines [index] = new_lines[ index - line ]
+		except :
+			 lines.append ( new_lines[ index - line ] )
 
 
 def perLineWrite() :
@@ -244,10 +244,10 @@ def perLineWrite() :
 	i = 0
 	line = ''
 	while line.rstrip() != rand_str :
-			  line = raw_input( "{:4}> ".format(i) )
-			  buffer.append( line + os.linesep )
-			  i += 1
-	buffer = buffer[:-1]	  # remove the hash added at the end
+			 line = raw_input( "{:4}> ".format(i) )
+			 buffer.append( line + os.linesep )
+			 i += 1
+	buffer = buffer[:-1]	 # remove the hash added at the end
 
 	return buffer
 
@@ -255,7 +255,7 @@ def perLineWrite() :
 def insertLine( line_n = None ) :
 	global lines
 	if line_n == None :
-		 line_n = len(lines)
+		line_n = len(lines)
 	print "Type the line to insert at line number %d" % line_n
 	line = raw_input("!> ")
 	lines.insert( line_n, line + os.linesep )
@@ -273,17 +273,17 @@ def swapLines(l1, l2) :
 def searchLines(keyword) :
 	ans = []
 	for line in lines :
-		 if keyword in line :
-			  ans.append( line )
+		if keyword in line :
+			 ans.append( line )
 	displayFile(lines_ = ans)
 
 
 def searchRegex(regex) :
 	ans = []
 	for line in lines :
-		 match = re.search(regex, line)
-		 if match :
-			  ans.append( line )
+		match = re.search(regex, line)
+		if match :
+			 ans.append( line )
 	displayFile(lines_ = ans)
 
 
@@ -291,22 +291,22 @@ def replaceKeyword(keyword, replacement = '', line = '*', instance = '*') :
 	global lines
 
 	if line == '*' :
-		 line_range =range( len(lines) )
+		line_range =range( len(lines) )
 	else :
-		 line_range = [line]
+		line_range = [line]
 
 	for index in line_range :
-		 if instance != '*' :
-			  splits = lines[index].split(keyword)
-			  if len(splits) >= instance + 1 :
+		if instance != '*' :
+			 splits = lines[index].split(keyword)
+			 if len(splits) >= instance + 1 :
 					before = keyword.join( splits[:instance] )
 					after = keyword.join( splits[instance+1:] )
 					ret = replacement.join( [before] + [after] )
-			  else :
+			 else :
 					ret = lines[index]
-		 else :
-			  ret = lines[index].replace(keyword, replacement)
-		 lines[index] = ret
+		else :
+			 ret = lines[index].replace(keyword, replacement)
+		lines[index] = ret
 
 
 #=====================================================================================================
@@ -314,18 +314,18 @@ def replaceKeyword(keyword, replacement = '', line = '*', instance = '*') :
 def bufferSelect ( buffer_ = None, sample = 3 ) :
 
 	if buffer_ == None :
-		 print "Buffers:"
+		print "Buffers:"
 
-		 for br in Buffers.keys() :
-			  print "\t[-] {:<10} \t({:<4} lines) -\t@ file:{}".format \
+		for br in Buffers.keys() :
+			 print "\t[-] {:<10} \t({:<4} lines) -\t@ file:{}".format \
 					( br, len(Buffers[br][0]), Buffers[br][1]  )
-			  displayFile( 0, sample, lines_ = Buffers[br][0] )
-		 return
+			 displayFile( 0, sample, lines_ = Buffers[br][0] )
+		return
 
 	if buffer_ not in Buffers.keys() :
-		 Buffers[ buffer_ ] = ([], None, None)
-		 UndoStacks[buffer_] = ([], [], -1)
-		 print "Created new Buffer '%s'" % buffer_
+		Buffers[ buffer_ ] = ([], None, None)
+		UndoStacks[buffer_] = ([], [], -1)
+		print "Created new Buffer '%s'" % buffer_
 	__changeToBuffer( buffer_ )
 	print "Changed to buffer '%s'" % buffer_
 
@@ -334,11 +334,11 @@ def bufferCopy ( buffer_ ) :
 
 	global Buffers
 	if buffer_ in Buffers.keys() :
-		 if not __askForConfirmation() :
-			  print "Aborted"
-			  return
+		if not __askForConfirmation() :
+			 print "Aborted"
+			 return
 	Buffers[buffer_] = copy.deepcopy(Buffers[CurrentBuffer])
-	UndoStacks[buffer_] = ([], [], -1)		 # fresh new history
+	UndoStacks[buffer_] = ([], [], -1)		# fresh new history
 	print "Current buffer copied to '%s'" % buffer_
 
 
@@ -363,12 +363,12 @@ ExcludeCommands = ['history', 'buffer', 'cpbuffer']
 # ExcludeCommands = ['redo', 'undo', 'history']
 def __findChanges() :
 	if UndoLast == lines :
-		 return None
+		return None
 	try :
-		 diff = difflib.ndiff(UndoLast, lines)
-		 diff = list( diff )
+		diff = difflib.ndiff(UndoLast, lines)
+		diff = list( diff )
 	except :
-		 return None
+		return None
 	return diff
 
 def __applyChanges( forward = False ) :
@@ -380,11 +380,11 @@ def __applyChanges( forward = False ) :
 	change = changes[UndoIndex]
 	stack[UndoIndex]
 	if forward :
-		 UndoIndex += 1
-		 lines = (''.join( difflib.restore(change, 2)) ).splitlines(1)
+		UndoIndex += 1
+		lines = (''.join( difflib.restore(change, 2)) ).splitlines(1)
 	else :
-		 UndoIndex -= 1
-		 lines = (''.join( difflib.restore(change, 1)) ).splitlines(1)
+		UndoIndex -= 1
+		lines = (''.join( difflib.restore(change, 1)) ).splitlines(1)
 	print "Index: %d" % UndoIndex
 
 def __undoReady() :
@@ -395,19 +395,19 @@ def __undoReady() :
 def __undoRecord( comm, args ) :
 	global UndoIndex
 	if comm in ExcludeCommands :
-		 return
+		return
 	args_ = ' '.join([str(arg) for arg in args])
 	exec_line = "%s %s" % ( comm, args_ )
 	changes, stack, undoIndex = UndoStacks[CurrentBuffer]
 	change = __findChanges()
 	if change == None :
-		 return
+		return
 	if UndoIndex < len(stack) - 1 :
-		 stack[UndoIndex] = exec_line
-		 changes[UndoIndex] = change
+		stack[UndoIndex] = exec_line
+		changes[UndoIndex] = change
 	else :
-		 stack.append( exec_line )
-		 changes.append( change )
+		stack.append( exec_line )
+		changes.append( change )
 	UndoIndex += 1
 	# UndoLast = ''	# to tell the Garbage Collection to delete the string copy
 	# print diff
@@ -415,39 +415,39 @@ def __undoRecord( comm, args ) :
 
 def undoChange() :
 	if UndoIndex >= 0 :
-		 __applyChanges()
+		__applyChanges()
 	else :
-		 print "No changes have been made!"
+		print "No changes have been made!"
 
 def redoChange() :
 	if UndoIndex < len(UndoStacks[CurrentBuffer][0]) -1 :
-		 __applyChanges( forward = True )
+		__applyChanges( forward = True )
 	else :
-		 print "This is the last buffer version!"
+		print "This is the last buffer version!"
 
 
 def showHistory() :
 	changes, stack, undoIndex = UndoStacks[CurrentBuffer]
 	print
 	if not changes :
-		 print "No history available!"
-		 return
+		print "No history available!"
+		return
 	print "States : %d. Current State : %d" % (len(changes), UndoIndex+1)
 	print "="*20
 	undoIndex = 0
 	hist_info = UndoStacks[CurrentBuffer][0:2]
 	for change, command in zip( *hist_info ) :
-		 if undoIndex == UndoIndex :
-			  arrow = '-->'
-		 else :
-			  arrow = '  '
+		if undoIndex == UndoIndex :
+			 arrow = '-->'
+		else :
+			 arrow = '  '
 
-		 print "%s Command: %s" % (arrow, command)
-		 for index, line in enumerate(change) :
-			  if line.startswith('+') or line.startswith('-') :
+		print "%s Command: %s" % (arrow, command)
+		for index, line in enumerate(change) :
+			 if line.startswith('+') or line.startswith('-') :
 					print "Line: %d> %s" %(index, line[:-1])
-		 undoIndex += 1
-		 print '-'*20
+		undoIndex += 1
+		print '-'*20
 	print 
 
 #=====================================================================================================
@@ -486,29 +486,29 @@ print
 
 while True :
 	try :
-		 comm = raw_input("Editor (Buffer: %s @ %s)> " % (CurrentBuffer, Buffers[CurrentBuffer][1]))
+		comm = raw_input("Editor (Buffer: %s @ %s)> " % (CurrentBuffer, Buffers[CurrentBuffer][1]))
 	except KeyboardInterrupt:
-		 print
-		 print "Pressed Ctrl+C. Type 'quit' to exit."
-		 comm = ''
+		print
+		print "Pressed Ctrl+C. Type 'quit' to exit."
+		comm = ''
 
 	if not comm :
-		 continue
+		continue
 
 	tokens = comm.split()
 	comm = tokens[0].lower()
 
 	args = [ autoconvert(tok) for tok in tokens[1:] ]
 	if comm in commands.keys() :
-		 try :
-			  __undoReady()
-			  commands[comm][0](*args)
+		try :
+			 __undoReady()
+			 commands[comm][0](*args)
 
-		 except Exception as e:
-			  print sys.exc_info()
-			  print "Command '%s' needs more parameters. Check 'help'." % comm
-		 __undoRecord(comm, args)
+		except Exception as e:
+			 print sys.exc_info()
+			 print "Command '%s' needs more parameters. Check 'help'." % comm
+		__undoRecord(comm, args)
 
 	else :
-		 print "Command '%s' not found." % comm
-		 print "Type 'help' for a list of commands or 'quit' to exit the Editor."
+		print "Command '%s' not found." % comm
+		print "Type 'help' for a list of commands or 'quit' to exit the Editor."
